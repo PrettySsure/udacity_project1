@@ -7,6 +7,20 @@ import datetime
 
 
 def process_song_file(cur, filepath):
+    """
+        Process songs files and insert records into the Postgres database.
+        the function takes both the established cursor(cur) to the database and
+        filepath to the log file (filepath)
+
+         Parameters
+        ----------
+        cur :
+            Database cursor reference
+        conn:
+             Database connection reference
+        filepath : string
+            The file system path to a log files
+    """
     # open song file
     df = pd.read_json(filepath, lines=True)
 
@@ -15,16 +29,27 @@ def process_song_file(cur, filepath):
     cur.execute(song_table_insert, song_data)
     
     # insert artist record
-    artist_data = df[[
-        "artist_id", 
-        "artist_name", 
-        "artist_location", 
-        "artist_latitude", 
-        "artist_longitude"]].values[0].tolist()
+    artist_data = df[["artist_id",
+                      "artist_name",
+                      "artist_location",
+                      "artist_latitude",
+                      "artist_longitude"]].values[0].tolist()
     cur.execute(artist_table_insert, artist_data)
 
 
 def process_log_file(cur, filepath):
+    """
+        Process log files and insert records into the Postgres database.
+        the function takes both the established cursor(cur) to the database and
+        filepath to the log file (filepath)
+
+         Parameters
+        ----------
+        cur :
+            Database cursor reference
+        filepath : string
+            The file system path to a log files
+        """
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -41,7 +66,7 @@ def process_log_file(cur, filepath):
                  "week": t.dt.week.values,
                  "month": t.dt.week.values,
                  "year": t.dt.year.values,
-                 "weekday":t.dt.weekday.values}
+                 "weekday": t.dt.weekday.values}
     time_df = pd.DataFrame(time_data) 
 
     for i, row in time_df.iterrows():
@@ -79,11 +104,24 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    """
+        Process files and insert to database
+        Parameters
+        ----------
+        cur :
+            Database cursor reference
+        conn:
+             Database connection reference
+        filepath : string
+            The file system path to a log files
+        func :
+            The function to process the files, depends on the type of file
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
-        files = glob.glob(os.path.join(root,'*.json'))
-        for f in files :
+        files = glob.glob(os.path.join(root, '*.json'))
+        for f in files:
             all_files.append(os.path.abspath(f))
 
     # get total number of files found
@@ -95,7 +133,6 @@ def process_data(cur, conn, filepath, func):
         func(cur, datafile)
         conn.commit()
         print('{}/{} files processed.'.format(i, num_files))
-        
 
 
 def main():
